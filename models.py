@@ -22,14 +22,13 @@ class Apple(object):
         pass
 
 class Board(object):
-    def __init__(self, width, height, tiles = 50):
+    def __init__(self, frame_width, frame_height, tiles = 50):
         # Add warning if width is beyond 50 or under 10
         self.tiles = 50#min(50, max(10, tiles))
-        self.width = width
-        self.height = height
+        self.frame_dim = [frame_width, frame_height]
         
         # Aspect ratio
-        ar = height/width
+        ar = frame_height/frame_width
         aspect_ratio_tr = tr.scale(ar, 1, 0)
 
         gpu_tiles = [es.toGPUShape(bs.createColorQuad(0, 0.93, 0)), es.toGPUShape(bs.createColorQuad(0, 1, 0.2))]
@@ -41,10 +40,15 @@ class Board(object):
         test_tile.transform = tr.matmul([aspect_ratio_tr, tr.scale(0.95 * 2*4/5/self.tiles, 0.95 * 2*4/5/self.tiles, 0)])
         test_tile.childs += [gpu_tiles[1]]
 
+
+        #for x in range(self.tiles):
+        #    fig  = sg.SceneGraphNode(f'tile{x}')
+        #    fig.transform = tr.matmul([aspect_ratio_tr, tr.scale(self.width * ar/self.tiles ,self.height*2*4/5/self.tiles, 0), tr.translate()])
+        #    tiles.append(fig)
         #for x in range(self.tiles):
         #    tiles.append([])
         #    for y in range(self.tiles):
-        #        tiles[x][y] = sg.SceneGraphNode(f'tile{x}_{y}')
+        #        tiles[x].append( sg.SceneGraphNode(f'tile{x}_{y}') )
         #        tiles[x][y].transform = tr.matmul([aspect_ratio_tr, tr.scale(self.width * ar/self.tiles ,self.height*2*4/5/self.tiles, 0)])
 
         board_TR = sg.SceneGraphNode('board_TR')
