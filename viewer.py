@@ -46,6 +46,8 @@ if __name__ == '__main__':
 
     # Building our objects
     # -----
+    background = Background(width, height)
+    board = Board(width, height, 10)
 
     t0 = 0
 
@@ -55,7 +57,6 @@ if __name__ == '__main__':
         ti = glfw.get_time()
         dt = ti - t0
         t0 = ti
-        print(ti)
 
         # Using GLFW to check for input events
         glfw.poll_events()
@@ -65,7 +66,9 @@ if __name__ == '__main__':
 
         # Setting every model
         # ----------
-
+        background.draw(pipeline)
+        board.draw(pipeline)
+        
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
 
