@@ -24,35 +24,29 @@ class Apple(object):
 class Board(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
         # Add warning if width is beyond 50 or under 10
-        self.tiles = 50#min(50, max(10, tiles))
+        self.tiles = 16#min(50, max(10, tiles))
         self.frame_dim = [frame_width, frame_height]
         
         # Aspect ratio
         ar = frame_height/frame_width
-        aspect_ratio_tr = tr.scale(ar, 1, 0)
+        #aspect_ratio_tr = tr.scale(ar, 1, 0)
+        self.dimensions = [ar*0.95 * 2*4/5, 0.95 * 2*4/5]
 
         gpu_tiles = [es.toGPUShape(bs.createColorQuad(0, 0.93, 0)), es.toGPUShape(bs.createColorQuad(0, 1, 0.2))]
 
         tiles = []
         count = 0
 
-        test_tile = sg.SceneGraphNode('test_tile')
-        test_tile.transform = tr.matmul([aspect_ratio_tr, tr.scale(0.95 * 2*4/5/self.tiles, 0.95 * 2*4/5/self.tiles, 0)])
-        test_tile.childs += [gpu_tiles[1]]
-
-
-        #for x in range(self.tiles):
-        #    fig  = sg.SceneGraphNode(f'tile{x}')
-        #    fig.transform = tr.matmul([aspect_ratio_tr, tr.scale(self.width * ar/self.tiles ,self.height*2*4/5/self.tiles, 0), tr.translate()])
-        #    tiles.append(fig)
-        #for x in range(self.tiles):
-        #    tiles.append([])
-        #    for y in range(self.tiles):
-        #        tiles[x].append( sg.SceneGraphNode(f'tile{x}_{y}') )
-        #        tiles[x][y].transform = tr.matmul([aspect_ratio_tr, tr.scale(self.width * ar/self.tiles ,self.height*2*4/5/self.tiles, 0)])
+        for x in range(self.tiles):
+            tiles.append([])
+            for y in range(self.tiles):
+                tiles[x].append( sg.SceneGraphNode(f'tile{x}_{y}') )
+                tiles[x][y].transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + x + 0.5, self.tiles/2 - y - 0.5, 0)])
+                tiles[x][y].childs += [gpu_tiles[(x + y)%2]]
 
         board_TR = sg.SceneGraphNode('board_TR')
-        board_TR.childs += [test_tile]
+        for i in range(len(tiles)):
+            board_TR.childs += tiles[i]
 
         self.model = board_TR
 
