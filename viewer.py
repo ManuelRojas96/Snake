@@ -1,5 +1,5 @@
 import glfw
-from OpenGL.GL import *
+from OpenGL.GL import GL_LINES, glClearColor, GL_REPEAT, GL_NEAREST
 import sys
 
 from models import *
@@ -29,9 +29,10 @@ if __name__ == '__main__':
 
     # Assembling the shader program (pipeline) with both shaders
     pipeline = es.SimpleTransformShaderProgram()
+    pipeline2 = es.SimpleTextureTransformShaderProgram()
 
     # Telling OpenGL to use our shader program
-    glUseProgram(pipeline.shaderProgram)
+    #glUseProgram(pipeline.shaderProgram)
 
     # Setting our RGB values (cause the Internet mostly shows integer values)
     r = 153
@@ -46,9 +47,11 @@ if __name__ == '__main__':
 
     # Building our objects
     # -----
+    tiles = 10
     background = Background(width, height)
-    board = Board(width, height, 10)
-    apple = Apple(width, height, 10)
+    board = Board(width, height, tiles)
+    apple = Apple(width, height, tiles)
+    snake = Snake(width, height, tiles)
 
     t0 = 0
 
@@ -65,11 +68,15 @@ if __name__ == '__main__':
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT)
 
+        
         # Setting every model
         # ----------
+        glUseProgram(pipeline.shaderProgram)
         background.draw(pipeline)
         board.draw(pipeline)
         apple.draw(pipeline)
+        glUseProgram(pipeline2.shaderProgram)
+        snake.draw(pipeline2)
         
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)

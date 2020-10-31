@@ -1,6 +1,7 @@
 import glfw
 import sys
 from typing import Union
+from models import Apple
 
 class Controller(object):
 

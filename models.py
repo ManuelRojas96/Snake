@@ -5,28 +5,47 @@ import easy_shaders as es
 import my_shapes
 import random
 
-from OpenGL.GL import glClearColor
+from OpenGL.GL import *
 import random
 from typing import List
 
 class Snake(object):
-    def __init__(self):
-        pass
-
-    def draw(self, pipeline):
-        pass
-
-class Apple(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
-        self.tiles = 16#min(50, max(10, tiles))
+        self.tiles = min(50, max(10, tiles))
         self.frame_dim = [frame_width, frame_height]
-        self.locationX = random.randint(0, self.tiles)
-        self.locationY = random.randint(0, self.tiles)
+        self.locationX = int(tiles/2)
+        self.locationY = int(tiles/2)
         
         # Aspect ratio
         ar = frame_height/frame_width
         #aspect_ratio_tr = tr.scale(ar, 1, 0)
-        self.dimensions = [1 * ar*0.95 * 2*4/5, 1 * 0.95 * 2*4/5]
+        self.dimensions = [ar*0.95 * 2*4/5, 0.95 * 2*4/5]
+
+        gpu_snake = es.toGPUShape(bs.createTextureQuad("question_box.png"), GL_CLAMP_TO_EDGE, GL_NEAREST)
+
+        snake = sg.SceneGraphNode('snake')
+        #snake.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
+        snake.childs += [gpu_snake]
+
+        snake_tr = sg.SceneGraphNode('snake_TR')
+        snake_tr.childs += [snake]
+
+        self.model = snake_tr
+
+    def draw(self, pipeline):
+        sg.drawSceneGraphNode(self.model, pipeline, "transform")
+
+class Apple(object):
+    def __init__(self, frame_width, frame_height, tiles = 50):
+        self.tiles = min(50, max(10, tiles))
+        self.frame_dim = [frame_width, frame_height]
+        self.locationX = random.randint(0, self.tiles - 1)
+        self.locationY = random.randint(0, self.tiles - 1)
+        
+        # Aspect ratio
+        ar = frame_height/frame_width
+        #aspect_ratio_tr = tr.scale(ar, 1, 0)
+        self.dimensions = [ar*0.95 * 2*4/5, 0.95 * 2*4/5]
 
         gpu_apple = es.toGPUShape(my_shapes.apple())
 
@@ -42,10 +61,13 @@ class Apple(object):
     def draw(self, pipeline):
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
+    def current_position(self):
+        return self.locationX, self.locationY
+
 class Board(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
         # Add warning if width is beyond 50 or under 10
-        self.tiles = 16#min(50, max(10, tiles))
+        self.tiles = min(50, max(10, tiles))
         self.frame_dim = [frame_width, frame_height]
         
         # Aspect ratio
@@ -53,7 +75,7 @@ class Board(object):
         #aspect_ratio_tr = tr.scale(ar, 1, 0)
         self.dimensions = [ar*0.95 * 2*4/5, 0.95 * 2*4/5]
 
-        gpu_tiles = [es.toGPUShape(bs.createColorQuad(0, 0.93, 0)), es.toGPUShape(bs.createColorQuad(0, 1, 0.2))]
+        gpu_tiles = [es.toGPUShape(bs.createColorQuad(1, 0.91, 0.84)), es.toGPUShape(bs.createColorQuad(0.99, 0.84, 0.61))]
 
         tiles = []
         count = 0
