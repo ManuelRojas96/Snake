@@ -2,6 +2,8 @@ import transformations as tr
 import basic_shapes as bs
 import scene_graph as sg
 import easy_shaders as es
+import my_shapes
+import random
 
 from OpenGL.GL import glClearColor
 import random
@@ -15,11 +17,30 @@ class Snake(object):
         pass
 
 class Apple(object):
-    def __init__(self):
-        pass
+    def __init__(self, frame_width, frame_height, tiles = 50):
+        self.tiles = 16#min(50, max(10, tiles))
+        self.frame_dim = [frame_width, frame_height]
+        self.locationX = random.randint(0, self.tiles)
+        self.locationY = random.randint(0, self.tiles)
+        
+        # Aspect ratio
+        ar = frame_height/frame_width
+        #aspect_ratio_tr = tr.scale(ar, 1, 0)
+        self.dimensions = [1 * ar*0.95 * 2*4/5, 1 * 0.95 * 2*4/5]
+
+        gpu_apple = es.toGPUShape(my_shapes.apple())
+
+        apple = sg.SceneGraphNode('apple')
+        apple.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
+        apple.childs += [gpu_apple]
+
+        apple_tr = sg.SceneGraphNode('apple_TR')
+        apple_tr.childs += [apple]
+
+        self.model = apple_tr
     
     def draw(self, pipeline):
-        pass
+        sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
 class Board(object):
     def __init__(self, frame_width, frame_height, tiles = 50):

@@ -48,6 +48,7 @@ if __name__ == '__main__':
     # -----
     background = Background(width, height)
     board = Board(width, height, 10)
+    apple = Apple(width, height, 10)
 
     t0 = 0
 
@@ -68,6 +69,7 @@ if __name__ == '__main__':
         # ----------
         background.draw(pipeline)
         board.draw(pipeline)
+        apple.draw(pipeline)
         
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
