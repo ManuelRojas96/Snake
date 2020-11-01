@@ -92,7 +92,7 @@ if __name__ == '__main__':
         # Movement of our snake
         movement_dt = t0-movement_t0
         if movement_dt >= 0.3:
-            snake.move()
+            snake.move(apple)
             movement_t0 = t0
             if snake.eat_apple(apple):
                 apple = Apple(width, height, tiles)
