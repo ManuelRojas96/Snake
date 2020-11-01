@@ -15,8 +15,7 @@ class Snake(object):
         self.frame_dim = [frame_width, frame_height]
         self.locationX = int(tiles/2)
         self.locationY = int(tiles/2)
-        self.last_direction = "A"    # "A" means "left" according to our WASD control buttons
-        self.next_direction = "A"
+        self.direction = "A"    # "A" means "left" according to our WASD control buttons
         self.face_orientation = "A"
         self.life_status = True
         self.movement_queue = []
@@ -51,7 +50,7 @@ class Snake(object):
         self.model = snake_tr
 
     def draw(self, pipeline):
-        if self.last_direction == "D":
+        if self.direction == "D":
             self.face_orientation = "D"
             new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_r.png"), GL_CLAMP, GL_NEAREST)
             sg.findNode(self.model, "snake_head").childs = [new_gpu_snake]
@@ -66,16 +65,16 @@ class Snake(object):
         if not self.life_status:
             return
         movement = tr.identity()
-        if self.next_direction == "W":
+        if self.direction == "W":
             movement = tr.translate(0, 1, 0)
             self.locationY += 1
-        elif self.next_direction == "A":
+        elif self.direction == "A":
             movement = tr.translate(-1, 0, 0)
             self.locationX += -1
-        elif self.next_direction == "S":
+        elif self.direction == "S":
             movement = tr.translate(0, -1, 0)
             self.locationY += -1
-        elif self.next_direction == "D":
+        elif self.direction == "D":
             movement = tr.translate(1, 0, 0)
             self.locationX += 1
         self.last_direction = self.next_direction
@@ -95,19 +94,19 @@ class Snake(object):
         sg.findNode(self.model, "snake_head").transform = tr.matmul([sg.findTransform(self.model, "snake_head"), movement])
 
     def set_direction(self, new_direction):
-        if self.last_direction == "A" and new_direction == "D":
+        if self.direction == "A" and new_direction == "D":
             pass
-        elif self.last_direction == "D" and new_direction == "A":
+        elif self.direction == "D" and new_direction == "A":
             pass
-        elif self.last_direction == "S" and new_direction == "W":
+        elif self.direction == "S" and new_direction == "W":
             pass
-        elif self.last_direction == "W" and new_direction == "S":
+        elif self.direction == "W" and new_direction == "S":
             pass
         elif self.life_status:
-            self.next_direction = new_direction
+            self.direction = new_direction
 
     def get_direction(self):
-        return self.last_direction
+        return self.direction
 
     def get_current_location(self):
         return self.locationX, self.locationY
@@ -159,7 +158,7 @@ class Apple(object):
         self.tiles = min(50, max(10, tiles))
         self.frame_dim = [frame_width, frame_height]
         self.locationX = random.randint(0, self.tiles - 1)
-        self.locationY = random.randint(1, self.tiles)
+        self.locationY = random.randint(0, self.tiles - 1)
         
         # Aspect ratio
         ar = frame_height/frame_width
