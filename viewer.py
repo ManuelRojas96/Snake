@@ -84,6 +84,12 @@ if __name__ == '__main__':
             background.game_over()
             background.draw_game_over(pipeline2)
 
+        print("----------")
+        print("snake pos: ",snake.get_current_location())
+        print("apple pos: ", apple.get_current_position())
+        if snake.eat_apple(apple):
+            apple = Apple(width, height, tiles)
+
         # Movement of our snake
         movement_dt = t0-movement_t0
         if movement_dt >= 0.6:

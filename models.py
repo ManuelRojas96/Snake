@@ -95,6 +95,12 @@ class Snake(object):
     def get_life_status(self):
         return self.life_status
 
+    def eat_apple(self, apple):
+        if self.get_current_location() == apple.get_current_position():
+            return True
+        else:
+            return False
+
 class Apple(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
         self.tiles = min(50, max(10, tiles))
@@ -110,7 +116,7 @@ class Apple(object):
         gpu_apple = es.toGPUShape(my_shapes.apple())
 
         apple = sg.SceneGraphNode('apple')
-        apple.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
+        apple.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, -self.tiles/2 + self.locationY - 0.5, 0)])
         apple.childs += [gpu_apple]
 
         apple_tr = sg.SceneGraphNode('apple_TR')
@@ -121,7 +127,7 @@ class Apple(object):
     def draw(self, pipeline):
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
-    def current_position(self):
+    def get_current_position(self):
         return self.locationX, self.locationY
 
 class Board(object):
