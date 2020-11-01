@@ -53,8 +53,8 @@ class Snake(object):
         if self.direction == "D":
             self.face_orientation = "D"
             new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_r.png"), GL_CLAMP, GL_NEAREST)
-            sg.findNode(self.model, "snake").childs = [new_gpu_snake]
-        elif self.direction == "A":
+            sg.findNode(self.model, "snake_head").childs = [new_gpu_snake]
+        elif self.last_direction == "A":
             self.face_orientation = "A"
             new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_l.png"), GL_CLAMP, GL_NEAREST)
             sg.findNode(self.model, "snake_head").childs = [new_gpu_snake]
@@ -77,7 +77,21 @@ class Snake(object):
         elif self.direction == "D":
             movement = tr.translate(1, 0, 0)
             self.locationX += 1
-        sg.findNode(self.model, "snake").transform = tr.matmul([sg.findTransform(self.model, "snake"), movement])
+        self.last_direction = self.next_direction
+        print("----------------------------")
+        print(self.last_position)
+        print(self.locationX, self.locationY)
+        self.movement_queue = [movement] + self.movement_queue
+        if self.eat_apple(apple):
+            self.movement_queue = []
+            self.add_body(movement)
+        if self.special_counter == 0:
+            self.last_position = [self.locationX, self.locationY]
+        else:
+            self.special_counter += -1
+        self.body_movement()
+        self.update_movement(movement)
+        sg.findNode(self.model, "snake_head").transform = tr.matmul([sg.findTransform(self.model, "snake_head"), movement])
 
     def set_direction(self, new_direction):
         if self.direction == "A" and new_direction == "D":

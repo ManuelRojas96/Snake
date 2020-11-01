@@ -79,6 +79,9 @@ if __name__ == '__main__':
         apple.draw(pipeline)
         glUseProgram(pipeline2.shaderProgram)
         snake.draw(pipeline2)
+        #print("----------")
+        #print("snake pos: ",snake.get_current_location())
+        #print("apple pos: ", apple.get_current_position())
 
         if not snake.life_status:
             background.game_over()
@@ -93,7 +96,7 @@ if __name__ == '__main__':
         # Movement of our snake
         movement_dt = t0-movement_t0
         if movement_dt >= 0.6:
-            snake.move()
+            snake.move(apple)
             movement_t0 = t0
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
