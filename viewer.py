@@ -52,6 +52,7 @@ if __name__ == '__main__':
     board = Board(width, height, tiles)
     apple = Apple(width, height, tiles)
     snake = Snake(width, height, tiles)
+    snake.set_current_apple(apple)
     controlador.set_model(snake)
 
     t0 = 0
@@ -92,10 +93,11 @@ if __name__ == '__main__':
         # Movement of our snake
         movement_dt = t0-movement_t0
         if movement_dt >= 0.3:
-            snake.move()
+            snake.move_all()
             movement_t0 = t0
-            if snake.eat_apple(apple):
+            if snake.check_apple():
                 apple = Apple(width, height, tiles)
+                snake.set_current_apple(apple)
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)

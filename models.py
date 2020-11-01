@@ -15,10 +15,17 @@ class Snake(object):
         self.frame_dim = [frame_width, frame_height]
         self.locationX = int(tiles/2)
         self.locationY = int(tiles/2)
+        self.last_position = [self.locationX, self.locationY]
         self.last_direction = "A"    # "A" means "left" according to our WASD control buttons
         self.next_direction = "A"
         self.face_orientation = "A"
         self.life_status = True
+        self.body_queue = []
+        self.movement_queue = []
+
+        self.gpu_body = es.toGPUShape(bs.createTextureQuad("question_box.png"), GL_CLAMP, GL_NEAREST)
+        
+        self.current_apple = None
         
         # Aspect ratio
         ar = frame_height/frame_width
@@ -27,9 +34,12 @@ class Snake(object):
 
         gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_l.png"), GL_CLAMP, GL_NEAREST)
 
+        snake_head = sg.SceneGraphNode('snake_head')
+        snake_head.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
+        snake_head.childs += [gpu_snake]
+
         snake = sg.SceneGraphNode('snake')
-        snake.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
-        snake.childs += [gpu_snake]
+        snake.childs += [snake_head]
 
         snake_tr = sg.SceneGraphNode('snake_TR')
         snake_tr.childs += [snake]
@@ -40,14 +50,14 @@ class Snake(object):
         if self.last_direction == "D":
             self.face_orientation = "D"
             new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_r.png"), GL_CLAMP, GL_NEAREST)
-            sg.findNode(self.model, "snake").childs = [new_gpu_snake]
+            sg.findNode(self.model, "snake_head").childs = [new_gpu_snake]
         elif self.last_direction == "A":
             self.face_orientation = "A"
             new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_l.png"), GL_CLAMP, GL_NEAREST)
-            sg.findNode(self.model, "snake").childs = [new_gpu_snake]
+            sg.findNode(self.model, "snake_head").childs = [new_gpu_snake]
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
-    def move(self):
+    def move_all(self):
         self.check_life()
         if not self.life_status:
             return
@@ -65,7 +75,11 @@ class Snake(object):
             movement = tr.translate(1, 0, 0)
             self.locationX += 1
         self.last_direction = self.next_direction
-        sg.findNode(self.model, "snake").transform = tr.matmul([sg.findTransform(self.model, "snake"), movement])
+        if self.check_apple():
+            self.eat_apple()
+        self.queue_movement(movement)
+        self.last_position = [self.locationX, self.locationY]
+        sg.findNode(self.model, "snake_head").transform = tr.matmul([sg.findTransform(self.model, "snake_head"), movement])
 
     def set_direction(self, new_direction):
         if self.last_direction == "A" and new_direction == "D":
@@ -97,11 +111,31 @@ class Snake(object):
     def get_life_status(self):
         return self.life_status
 
-    def eat_apple(self, apple):
-        if self.get_current_location() == apple.get_current_position():
+    def check_apple(self):
+        if self.get_current_location() == self.current_apple.get_current_position():
             return True
         else:
             return False
+
+    def eat_apple(self):
+        self.add_body()
+
+    def set_current_apple(self, apple):
+        self.current_apple = apple
+
+    def add_body(self):
+        snake_body = sg.SceneGraphNode(f'snake_body_{len(self.body_queue)}')
+        snake_body.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.last_position[0] + 0.5, -self.tiles/2 + self.last_position[1] - 0.5, 0)])
+        print(self.last_position)
+        snake_body.childs += [self.gpu_body]
+
+        sg.findNode(self.model, "snake").childs += [snake_body]
+
+    def queue_movement(self, movement):
+        self.movement_queue.append(movement)
+
+    def move(self, node, direction):
+        pass
 
 class Apple(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
