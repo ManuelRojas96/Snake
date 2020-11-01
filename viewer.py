@@ -1,6 +1,6 @@
 import glfw
 from OpenGL.GL import GL_LINES, glClearColor, GL_REPEAT, GL_NEAREST
-import sys
+import sys, time
 
 from models import *
 from controller import Controller
@@ -79,22 +79,23 @@ if __name__ == '__main__':
         apple.draw(pipeline)
         glUseProgram(pipeline2.shaderProgram)
         snake.draw(pipeline2)
+        print("----------")
+        print("snake pos: ",snake.get_current_location())
+        print("apple pos: ", apple.get_current_position())
 
         if not snake.life_status:
             background.game_over()
             background.draw_game_over(pipeline2)
 
-        print("----------")
-        print("snake pos: ",snake.get_current_location())
-        print("apple pos: ", apple.get_current_position())
-        if snake.eat_apple(apple):
-            apple = Apple(width, height, tiles)
+        
 
         # Movement of our snake
         movement_dt = t0-movement_t0
-        if movement_dt >= 0.6:
+        if movement_dt >= 0.3:
             snake.move()
             movement_t0 = t0
+            if snake.eat_apple(apple):
+                apple = Apple(width, height, tiles)
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
