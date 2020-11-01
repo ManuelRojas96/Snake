@@ -171,9 +171,6 @@ class Snake(object):
         self.occupied_positions = self.occupied_positions[0] + body_positions
             
     def clash(self, node_position, is_head = False):
-        print("CLASH")
-        print(node_position)
-    #print(self.occupied_positions[0])
         if is_head:
             if list(node_position) in self.occupied_positions[1:]:
                 return True
@@ -216,7 +213,6 @@ class Apple(object):
 
 class Board(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
-        # Add warning if width is beyond 50 or under 10
         self.tiles = min(50, max(10, tiles))
         self.frame_dim = [frame_width, frame_height]
         
@@ -280,7 +276,7 @@ class Background(object):
         gpu_game_over = es.toGPUShape(bs.createTextureQuad("game_over.png"), GL_CLAMP, GL_NEAREST)
 
         game_over = sg.SceneGraphNode('game_over_banner')
-        game_over.transform = tr.matmul([tr.scale(2, 1/5, 0), tr.translate(0, 4.5, 0)])
+        game_over.transform = tr.matmul([tr.scale(2.3, 1/5, 0), tr.translate(0, 0, 0)])     # traslation to top was 4.5
         game_over.childs += [gpu_game_over]
 
         game_over_tr = sg.SceneGraphNode('game_over_banner_TR')
@@ -289,5 +285,6 @@ class Background(object):
         self.g_over = game_over_tr
         self.alive = False
 
-    def draw_game_over(self, pipeline):
+    def draw_game_over(self, pipeline, dt):
+        sg.findNode(self.g_over, "game_over_banner_TR").transform = tr.matmul([sg.findTransform(self.g_over, "game_over_banner_TR"), tr.rotationZ(dt)])
         sg.drawSceneGraphNode(self.g_over, pipeline, "transform")

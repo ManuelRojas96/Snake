@@ -87,13 +87,13 @@ if __name__ == '__main__':
 
         if not snake.life_status:
             background.game_over()
-            background.draw_game_over(pipeline2)
+            background.draw_game_over(pipeline2, ti%300)
 
         
 
         # Movement of our snake
         movement_dt = t0-movement_t0
-        if movement_dt >= 0.1 and not controlador.is_paused():
+        if movement_dt >= 0.3 and not controlador.is_paused():
             snake.move_all()
             movement_t0 = t0
             if snake.check_apple():
