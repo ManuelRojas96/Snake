@@ -7,6 +7,7 @@ class Controller(object):
 
     def __init__(self):
         self.model = None
+        self.pause = False
 
     def set_model(self, m):
         self.model = m
@@ -30,5 +31,8 @@ class Controller(object):
         elif key == glfw.KEY_D and action == glfw.PRESS:
             self.model.set_direction("D")
 
-        else:
-            print('Unknown key')
+        elif key == glfw.KEY_ENTER and action == glfw.PRESS:
+            self.pause = not self.pause
+
+    def is_paused(self):
+        return self.pause

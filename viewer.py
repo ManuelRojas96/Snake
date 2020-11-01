@@ -47,7 +47,11 @@ if __name__ == '__main__':
 
     # Building our objects
     # -----
-    tiles = 10
+    tiles = int(input("Bienvenido a 'Snake v2.0: Electric Boogaloo'.\n" + \
+        "A continuación, ingrese las dimensiones del tablero en el que jugará. Este valor debe estar entre 10 y 50.\n" + \
+            "Si ingresa un número muy grande, o muy chico, se ajustará al límite más cercano.\n" + \
+                "Se recomienda jugar con valores de dimensión entre 10 y 20. Jugar con más de 20 podría provocar una caída de rendimiento.\n"))
+    print("Valor seleccionado: ", min(50, max(10, tiles)))
     background = Background(width, height)
     board = Board(width, height, tiles)
     apple = Apple(width, height, tiles)
@@ -80,9 +84,6 @@ if __name__ == '__main__':
         apple.draw(pipeline)
         glUseProgram(pipeline2.shaderProgram)
         snake.draw(pipeline2)
-        print("----------")
-        print("snake pos: ",snake.get_current_location())
-        print("apple pos: ", apple.get_current_position())
 
         if not snake.life_status:
             background.game_over()
@@ -92,11 +93,13 @@ if __name__ == '__main__':
 
         # Movement of our snake
         movement_dt = t0-movement_t0
-        if movement_dt >= 0.3:
+        if movement_dt >= 0.1 and not controlador.is_paused():
             snake.move_all()
             movement_t0 = t0
             if snake.check_apple():
                 apple = Apple(width, height, tiles)
+                while(snake.clash(apple.get_current_position())):
+                    apple = Apple(width, height, tiles)
                 snake.set_current_apple(apple)
 
         # Once the render is done, buffers are swapped, showing only the complete scene.

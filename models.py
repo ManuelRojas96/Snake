@@ -13,8 +13,8 @@ class Snake(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
         self.tiles = min(50, max(10, tiles))
         self.frame_dim = [frame_width, frame_height]
-        self.locationX = int(tiles/2)
-        self.locationY = int(tiles/2)
+        self.locationX = int(self.tiles/2)
+        self.locationY = int(self.tiles/2)
         self.last_position = [self.locationX, self.locationY]
         self.last_direction = "A"    # "A" means "left" according to our WASD control buttons
         self.next_direction = "A"
@@ -22,6 +22,9 @@ class Snake(object):
         self.life_status = True
         self.body_queue = []
         self.movement_queue = []
+        self.occupied_positions = [[self.last_position]]
+
+        self.recently_added_body = False
 
         self.gpu_body = es.toGPUShape(bs.createTextureQuad("question_box.png"), GL_CLAMP, GL_NEAREST)
         
@@ -29,13 +32,12 @@ class Snake(object):
         
         # Aspect ratio
         ar = frame_height/frame_width
-        #aspect_ratio_tr = tr.scale(ar, 1, 0)
         self.dimensions = [ar*0.95 * 2*4/5, 0.95 * 2*4/5]
 
         gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_l.png"), GL_CLAMP, GL_NEAREST)
 
         snake_head = sg.SceneGraphNode('snake_head')
-        snake_head.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
+        snake_head.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, -self.tiles/2 + self.locationY - 0.5, 0)])
         snake_head.childs += [gpu_snake]
 
         snake = sg.SceneGraphNode('snake')
@@ -61,6 +63,7 @@ class Snake(object):
         self.check_life()
         if not self.life_status:
             return
+        self.move(self.movement_queue)
         movement = tr.identity()
         if self.next_direction == "W":
             movement = tr.translate(0, 1, 0)
@@ -74,11 +77,12 @@ class Snake(object):
         elif self.next_direction == "D":
             movement = tr.translate(1, 0, 0)
             self.locationX += 1
+        self.queue_movement(self.next_direction)
         self.last_direction = self.next_direction
         if self.check_apple():
             self.eat_apple()
-        self.queue_movement(movement)
         self.last_position = [self.locationX, self.locationY]
+        self.occupied_positions = [self.last_position] + self.occupied_positions[1:]
         sg.findNode(self.model, "snake_head").transform = tr.matmul([sg.findTransform(self.model, "snake_head"), movement])
 
     def set_direction(self, new_direction):
@@ -100,10 +104,9 @@ class Snake(object):
         return self.locationX, self.locationY
 
     def check_life(self):
-        if self.locationX > 9 or self.locationX < 0:
+        if self.locationX > (self.tiles - 1) or self.locationX < 0 or self.locationY < 1 or self.locationY > (self.tiles) or self.clash([self.locationX, self.locationY], is_head = True):
             self.die()
-        if self.locationY < 1 or self.locationY > 10:
-            self.die()
+        
 
     def die(self):
         self.life_status = False
@@ -124,18 +127,63 @@ class Snake(object):
         self.current_apple = apple
 
     def add_body(self):
+        posX = self.body_queue[len(self.body_queue) - 1]["last_position"][0] if len(self.body_queue) > 0 else self.last_position[0]
+        posY = self.body_queue[len(self.body_queue) - 1]["last_position"][1] if len(self.body_queue) > 0 else self.last_position[1]
         snake_body = sg.SceneGraphNode(f'snake_body_{len(self.body_queue)}')
-        snake_body.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.last_position[0] + 0.5, -self.tiles/2 + self.last_position[1] - 0.5, 0)])
-        print(self.last_position)
+        snake_body.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + posX + 0.5, -self.tiles/2 + posY - 0.5, 0)])
         snake_body.childs += [self.gpu_body]
+
+        self.body_queue.append({"name": f'snake_body_{len(self.body_queue)}', "position": [posX, posY], "last_position": [posX, posY]})
 
         sg.findNode(self.model, "snake").childs += [snake_body]
 
-    def queue_movement(self, movement):
-        self.movement_queue.append(movement)
+    def queue_movement(self, direction):
+        self.movement_queue.append(direction)
 
-    def move(self, node, direction):
-        pass
+    def move(self, move_Q):
+        moveX = 0
+        moveY = 0
+        movement = tr.identity()
+        body_positions = []
+        for i in range(len(self.body_queue)):
+            direction = move_Q[len(move_Q) - 1 - i]
+            if direction == "W":
+                movement = tr.translate(0, 1, 0)
+                moveY = 1
+            elif direction == "A":
+                movement = tr.translate(-1, 0, 0)
+                moveX = -1
+            elif direction == "S":
+                movement = tr.translate(0, -1, 0)
+                moveY = -1
+            elif direction == "D":
+                movement = tr.translate(1, 0, 0)
+                moveX = 1
+            sg.findNode(self.model, self.body_queue[i]["name"]).transform = tr.matmul([sg.findTransform(self.model,  self.body_queue[i]["name"]), movement])
+            self.body_queue[i]["last_position"][0] = self.body_queue[i]["position"][0]
+            self.body_queue[i]["last_position"][1] = self.body_queue[i]["position"][1]
+            self.body_queue[i]["position"][0] = self.body_queue[i]["position"][0] + moveX
+            self.body_queue[i]["position"][1] = self.body_queue[i]["position"][1] + moveY
+            moveX = 0
+            moveY = 0
+            body_positions.append(self.body_queue[i]["position"])
+        
+        self.occupied_positions = self.occupied_positions[0] + body_positions
+            
+    def clash(self, node_position, is_head = False):
+        print("CLASH")
+        print(node_position)
+    #print(self.occupied_positions[0])
+        if is_head:
+            if list(node_position) in self.occupied_positions[1:]:
+                return True
+            else:
+                return False
+        else:
+            if list(node_position) in self.occupied_positions:
+                return True
+            else:
+                return False
 
 class Apple(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
