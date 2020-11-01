@@ -20,9 +20,11 @@ class Snake(object):
         self.face_orientation = "A"
         self.life_status = True
         self.movement_queue = []
+        self.remaining_moves = []
         self.body_count = 0
         self.last_position = [self.locationX, self.locationY]
         self.gpu_body = es.toGPUShape(bs.createTextureQuad("question_box.png"), GL_CLAMP, GL_NEAREST)
+        self.special_counter = 0
         
         # Aspect ratio
         ar = frame_height/frame_width
@@ -77,11 +79,19 @@ class Snake(object):
             movement = tr.translate(1, 0, 0)
             self.locationX += 1
         self.last_direction = self.next_direction
+        print("----------------------------")
+        print(self.last_position)
+        print(self.locationX, self.locationY)
+        self.movement_queue = [movement] + self.movement_queue
         if self.eat_apple(apple):
-            self.add_body()
-        #self.body_movement()
-        #self.movement_queue.append(movement)
-        self.last_position = [self.locationX, self.locationY]
+            self.movement_queue = []
+            self.add_body(movement)
+        if self.special_counter == 0:
+            self.last_position = [self.locationX, self.locationY]
+        else:
+            self.special_counter += -1
+        self.body_movement()
+        self.update_movement(movement)
         sg.findNode(self.model, "snake_head").transform = tr.matmul([sg.findTransform(self.model, "snake_head"), movement])
 
     def set_direction(self, new_direction):
@@ -122,20 +132,27 @@ class Snake(object):
             return False
 
     def body_movement(self):
-        if len(self.movement_queue) == 0:
-            return
-        
+        for i in range(self.body_count):
+            sg.findNode(self.model, f'snake_body_{i}').transform = tr.matmul([sg.findTransform(self.model, f'snake_body_{i}'), (self.remaining_moves[i].pop() if len(self.remaining_moves[i]) != 0 else tr.identity())])
 
-    def update_movement(self):
-        pass
+
+    def update_movement(self, movement):
+        for i in range(self.body_count):
+            self.remaining_moves[i] = [movement] + self.remaining_moves[i]
     
-    def add_body(self):
+    def add_body(self, movement):
+        print("toy añadiendo body")
         snake_body = sg.SceneGraphNode(f'snake_body_{self.body_count}')
         snake_body.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.last_position[0] + 0.5, -self.tiles/2 + self.last_position[1] - 0.5, 0)])
-        print(self.last_position)
         snake_body.childs += [self.gpu_body]
+        self.special_counter = self.body_count
+        self.body_count += 1
+        
 
         sg.findNode(self.model, "snake").childs += [snake_body]
+        self.remaining_moves.append([])
+        for i in range(self.body_count):
+            self.remaining_moves[self.body_count - 1] += [tr.identity()]
     
 class Apple(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
