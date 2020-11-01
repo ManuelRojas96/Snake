@@ -52,8 +52,10 @@ if __name__ == '__main__':
     board = Board(width, height, tiles)
     apple = Apple(width, height, tiles)
     snake = Snake(width, height, tiles)
+    controlador.set_model(snake)
 
     t0 = 0
+    movement_t0 = 0
 
     while not glfw.window_should_close(window):
 
@@ -77,7 +79,17 @@ if __name__ == '__main__':
         apple.draw(pipeline)
         glUseProgram(pipeline2.shaderProgram)
         snake.draw(pipeline2)
-        
+
+        if not snake.life_status:
+            background.game_over()
+            background.draw_game_over(pipeline2)
+
+        # Movement of our snake
+        movement_dt = t0-movement_t0
+        if movement_dt >= 0.6:
+            snake.move()
+            movement_t0 = t0
+
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
 

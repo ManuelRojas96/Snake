@@ -15,16 +15,19 @@ class Snake(object):
         self.frame_dim = [frame_width, frame_height]
         self.locationX = int(tiles/2)
         self.locationY = int(tiles/2)
+        self.direction = "A"    # "A" means "left" according to our WASD control buttons
+        self.face_orientation = "A"
+        self.life_status = True
         
         # Aspect ratio
         ar = frame_height/frame_width
         #aspect_ratio_tr = tr.scale(ar, 1, 0)
         self.dimensions = [ar*0.95 * 2*4/5, 0.95 * 2*4/5]
 
-        gpu_snake = es.toGPUShape(bs.createTextureQuad("question_box.png"), GL_CLAMP_TO_EDGE, GL_NEAREST)
+        gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_l.png"), GL_CLAMP, GL_NEAREST)
 
         snake = sg.SceneGraphNode('snake')
-        #snake.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
+        snake.transform = tr.matmul([tr.scale(self.dimensions[0]/self.tiles, self.dimensions[1]/self.tiles, 0), tr.translate(-self.tiles/2 + self.locationX + 0.5, self.tiles/2 - self.locationY - 0.5, 0)])
         snake.childs += [gpu_snake]
 
         snake_tr = sg.SceneGraphNode('snake_TR')
@@ -33,7 +36,64 @@ class Snake(object):
         self.model = snake_tr
 
     def draw(self, pipeline):
+        if self.direction == "D":
+            self.face_orientation = "D"
+            new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_r.png"), GL_CLAMP, GL_NEAREST)
+            sg.findNode(self.model, "snake").childs = [new_gpu_snake]
+        elif self.direction == "A":
+            self.face_orientation = "A"
+            new_gpu_snake = es.toGPUShape(bs.createTextureQuad("boo_l.png"), GL_CLAMP, GL_NEAREST)
+            sg.findNode(self.model, "snake").childs = [new_gpu_snake]
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
+
+    def move(self):
+        self.check_life()
+        if not self.life_status:
+            return
+        movement = tr.identity()
+        if self.direction == "W":
+            movement = tr.translate(0, 1, 0)
+            self.locationY += 1
+        elif self.direction == "A":
+            movement = tr.translate(-1, 0, 0)
+            self.locationX += -1
+        elif self.direction == "S":
+            movement = tr.translate(0, -1, 0)
+            self.locationY += -1
+        elif self.direction == "D":
+            movement = tr.translate(1, 0, 0)
+            self.locationX += 1
+        sg.findNode(self.model, "snake").transform = tr.matmul([sg.findTransform(self.model, "snake"), movement])
+
+    def set_direction(self, new_direction):
+        if self.direction == "A" and new_direction == "D":
+            pass
+        elif self.direction == "D" and new_direction == "A":
+            pass
+        elif self.direction == "S" and new_direction == "W":
+            pass
+        elif self.direction == "W" and new_direction == "S":
+            pass
+        elif self.life_status:
+            self.direction = new_direction
+
+    def get_direction(self):
+        return self.direction
+
+    def get_current_location(self):
+        return self.locationX, self.locationY
+
+    def check_life(self):
+        if self.locationX > 9 or self.locationX < 0:
+            self.die()
+        if self.locationY < 1 or self.locationY > 10:
+            self.die()
+
+    def die(self):
+        self.life_status = False
+
+    def get_life_status(self):
+        return self.life_status
 
 class Apple(object):
     def __init__(self, frame_width, frame_height, tiles = 50):
@@ -101,6 +161,9 @@ class Background(object):
         # Frame dimensions
         self.width = width
         self.height = height
+        self.alive = True
+        
+        self.g_over = None
 
         # Outer board dimensions
         self.dimensions = [0.5 * self.width * 9/16 * 16/9 * 2, 0.5 * self.height * 2 * 4/5]
@@ -122,4 +185,19 @@ class Background(object):
     
     def get_dimensions(self):
         return self.dimensions
-    
+
+    def game_over(self):
+        gpu_game_over = es.toGPUShape(bs.createTextureQuad("game_over.png"), GL_CLAMP, GL_NEAREST)
+
+        game_over = sg.SceneGraphNode('game_over_banner')
+        game_over.transform = tr.matmul([tr.scale(2, 1/5, 0), tr.translate(0, 4.5, 0)])
+        game_over.childs += [gpu_game_over]
+
+        game_over_tr = sg.SceneGraphNode('game_over_banner_TR')
+        game_over_tr.childs += [game_over]
+
+        self.g_over = game_over_tr
+        self.alive = False
+
+    def draw_game_over(self, pipeline):
+        sg.drawSceneGraphNode(self.g_over, pipeline, "transform")

@@ -19,16 +19,16 @@ class Controller(object):
             sys.exit()
 
         elif key == glfw.KEY_W and action == glfw.PRESS:
-            pass
+            self.model.set_direction("W")
 
-        elif key == glfw.KEY_S and action == glfw.PRESS:
-            pass
-        
         elif key == glfw.KEY_A and action == glfw.PRESS:
-            pass
+            self.model.set_direction("A")
+        
+        elif key == glfw.KEY_S and action == glfw.PRESS:
+            self.model.set_direction("S")
         
         elif key == glfw.KEY_D and action == glfw.PRESS:
-            pass
+            self.model.set_direction("D")
 
         else:
             print('Unknown key')
